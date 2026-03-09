@@ -1,0 +1,300 @@
+{
+    "name": "Website Monitor System",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "create-monitor",
+                "responseMode": "responseNode"
+            },
+            "id": "e9e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e8e1",
+            "name": "Create Monitor",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                200,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "mode": "manual",
+                "fields": {
+                    "values": [
+                        {
+                            "name": "website",
+                            "stringValue": "={{$json.body.website}}"
+                        },
+                        {
+                            "name": "email",
+                            "stringValue": "={{$json.body.email}}"
+                        }
+                    ]
+                }
+            },
+            "id": "e9e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e8e2",
+            "name": "Prepare Monitor",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 2,
+            "position": [
+                420,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "responseData": "={{ { status: 'monitor_created', website: $json.website } }}"
+            },
+            "id": "e9e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e8e3",
+            "name": "Respond Create",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                640,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "check-monitor",
+                "responseMode": "responseNode"
+            },
+            "id": "e9e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e8e4",
+            "name": "Check Monitor",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                200,
+                450
+            ]
+        },
+        {
+            "parameters": {
+                "url": "={{$node[\"Check Monitor\"].json.body.website}}",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "User-Agent",
+                            "value": "WebsiteMonitorBot/1.0 (Contact: your@email.com)"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "e9e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e8e5",
+            "name": "Fetch Website",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4,
+            "position": [
+                420,
+                450
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "hash",
+                "type": "SHA256",
+                "value": "={{$json.data}}"
+            },
+            "id": "e9e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e8e6",
+            "name": "Generate Hash",
+            "type": "n8n-nodes-base.crypto",
+            "typeVersion": 1,
+            "position": [
+                640,
+                450
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const store = $getWorkflowStaticData('global');\n\nif (!store.hashes) {\n  store.hashes = {};\n}\n\n// Accès correct aux données du Webhook via .body\nconst monitorId = $node[\"Check Monitor\"].json.body.monitorId;\nconst website = $node[\"Check Monitor\"].json.body.website;\nconst currentHash = $node[\"Generate Hash\"].json.data;\n\nconst previousHash = store.hashes[website] ?? null;\n\nlet status = 'unchanged';\n\nif (previousHash === null) {\n status = 'first_check';\n} else if (previousHash !== currentHash) {\n status = 'changed';\n}\n\nstore.hashes[website] = currentHash;\n\nreturn { json: { monitorId, website, status, previousHash, currentHash, responseTime: 200 } };"
+            },
+            "id": "e9e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e8e7",
+            "name": "Compare Hash",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                860,
+                450
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://192.168.8.104:4000/webhook/checks",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "monitorId",
+                            "value": "={{$json.monitorId}}"
+                        },
+                        {
+                            "name": "status",
+                            "value": "={{$json.status}}"
+                        },
+                        {
+                            "name": "currentHash",
+                            "value": "={{$json.currentHash}}"
+                        },
+                        {
+                            "name": "responseTime",
+                            "value": "={{$json.responseTime}}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "e9e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e8e8",
+            "name": "Callback Backend",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4,
+            "position": [
+                1080,
+                450
+            ]
+        },
+        {
+            "parameters": {
+                "responseData": "={{$json}}"
+            },
+            "id": "e9e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e8e9",
+            "name": "Respond Check",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1300,
+                450
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "minutes",
+                            "minutesInterval": 30
+                        }
+                    ]
+                }
+            },
+            "id": "e9e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e810",
+            "name": "Auto Check Scheduler",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                200,
+                700
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const store = $getWorkflowStaticData('global');\n\nif (!store.hashes) {\n return [];\n}\n\nreturn Object.keys(store.hashes).map(site => ({ json: { website: site } }));"
+            },
+            "id": "e9e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e811",
+            "name": "Load Monitors",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                420,
+                700
+            ]
+        }
+    ],
+    "connections": {
+        "Create Monitor": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Monitor",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Monitor": {
+            "main": [
+                [
+                    {
+                        "node": "Respond Create",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check Monitor": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch Website",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Website": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Hash",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Hash": {
+            "main": [
+                [
+                    {
+                        "node": "Compare Hash",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Compare Hash": {
+            "main": [
+                [
+                    {
+                        "node": "Callback Backend",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Callback Backend": {
+            "main": [
+                [
+                    {
+                        "node": "Respond Check",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Auto Check Scheduler": {
+            "main": [
+                [
+                    {
+                        "node": "Load Monitors",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "timezone": "UTC"
+    }
+}
