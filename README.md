@@ -51,8 +51,6 @@ WebWatch is a powerful, modern Website Monitoring SaaS designed to track changes
    ```bash
    cd backend
    npm install
-   # Create a .env file with:
-   # N8N_WEBHOOK_URL=http://localhost:5678/webhook/check-monitor
    npm run dev
    ```
 
@@ -60,8 +58,6 @@ WebWatch is a powerful, modern Website Monitoring SaaS designed to track changes
    ```bash
    cd ../frontend
    npm install
-   # Create a .env.local file with:
-   # NEXT_PUBLIC_API_URL=http://localhost:4000
    npm run dev
    ```
 
