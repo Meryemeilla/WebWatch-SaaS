@@ -2,7 +2,7 @@
 
 WebWatch is a powerful, modern Website Monitoring SaaS designed to track changes in website content in real-time. It leverages **Next.js**, **Express**, and **n8n** to provide a seamless monitoring experience with automated workflows and premium UI.
 
-![WebWatch Dashboard](https://raw.githubusercontent.com/octocat/Spoon-Knife/master/README.md) <!-- Placeholder for a real screenshot if available -->
+![WebWatch Dashboard](./Screen.PNG)
 
 ##  Features
 
